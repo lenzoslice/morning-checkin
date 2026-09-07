@@ -84,7 +84,7 @@ label.lbl { display:block; font-weight:600; font-size:14px; margin:var(--sp-3) 0
 /* today */
 .daypill { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:var(--r-pill); background:var(--raised); border:1px solid var(--line-2); font-weight:600; font-size:14px; }
 .datehead { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:var(--sp-3); flex-wrap:wrap; }
-.datehead .d { font-weight:700; font-size:18px; text-transform:capitalize; }
+.datehead .d { font-weight:700; font-size:18px; }
 .picker { display:grid; grid-template-columns:repeat(11, 1fr); gap:4px; margin-top:6px; }
 .picker button { min-height:42px; border-radius:var(--r-sm); border:1px solid var(--line-2); background:var(--raised); font-weight:700; padding:0; }
 .picker button[aria-pressed=true] { background:var(--ink); color:var(--bg); border-color:var(--ink); }
@@ -185,7 +185,13 @@ ul.plain { padding-left:18px; margin:6px 0; } ul.plain li { margin-bottom:6px; }
 
 <script>
 "use strict";
-var API = "__API_URL__";
+var SB = "https://fdybcqdavyezdvxehlee.supabase.co";
+var ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeWJjcWRhdnllemR2eGVobGVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1OTg4MDMsImV4cCI6MjEwMTE3NDgwM30.OS_jRNaQR8Qh0x0yW-WBZZhkd2gGbwxMP1a_rYiBNqo"; // public key; data is PIN-gated server-side
+var ACTIONS = {
+  state:["ci_app_state",[]], checkin:["ci_save_checkin",["date","l","r","settled","dlp","note"]], delete_checkin:["ci_delete_checkin",["date"]],
+  gym:["ci_save_gym",["date","session","exercises","note"]], set_baseline:["ci_set_baseline",["b"]], note:["ci_add_review_note",["text"]],
+  event:["ci_upsert_event",["date","etype","time","detail"]], delete_event:["ci_delete_event",["date"]], setting:["ci_set_setting",["key","value"]]
+};
 var S = null, ME = null, LANG = localStorage.getItem("ci_lang") || "fr", TAB = "today";
 var form = { l: null, r: null, settled: true, dlp: false, editing: false };
 var gymUI = { session: null, ex: {} };
@@ -257,16 +263,21 @@ function $(id){ return document.getElementById(id); }
 function esc(s){ var d=document.createElement("div"); d.textContent = s==null?"":String(s); return d.innerHTML; }
 function myCode(){ return localStorage.getItem("ci_code") || ""; }
 function post(body){
-  body.code = myCode();
-  return fetch(API, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)})
-    .then(function(r){ return r.json(); })
-    .catch(function(){ return {ok:false, error:"offline"}; });
+  var spec = ACTIONS[body.action], args = { p_code: myCode() };
+  spec[1].forEach(function(k){ args["p_"+k] = body[k] === undefined ? null : body[k]; });
+  return fetch(SB + "/rest/v1/rpc/" + spec[0], { method:"POST", headers:{ "Content-Type":"application/json", "apikey":ANON, "Authorization":"Bearer "+ANON }, body: JSON.stringify(args) })
+    .then(function(r){ return r.text().then(function(t){
+      var j = {}; try { j = JSON.parse(t); } catch(e) {}
+      if (!r.ok) { var m = String(j.message || j.hint || t || ""); return { ok:false, error: m.indexOf("forbidden")>=0 ? "forbidden" : (m.indexOf("out of range")>=0 || m.indexOf("violates")>=0) ? "bad_value" : "server_error" }; }
+      return j;
+    }); })
+    .catch(function(){ return { ok:false, error:"offline" }; });
 }
 function toast(m){ var e=$("toast"); e.textContent=m; e.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(function(){ e.classList.remove("on"); },1800); }
 function isoDate(d){ return d.toISOString().slice(0,10); }
 function parseD(s){ var p=s.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
 function addDays(s, n){ var d=parseD(s); d.setDate(d.getDate()+n); return isoDate(new Date(d.getTime()-d.getTimezoneOffset()*60000)); }
-function fmtDate(s, long){ var d=parseD(s); return d.toLocaleDateString(LANG==="fr"?"fr-CA":"en-CA", long?{weekday:"long", day:"numeric", month:"long"}:{weekday:"short", day:"numeric", month:"short"}); }
+function fmtDate(s, long){ var d=parseD(s); var out=d.toLocaleDateString(LANG==="fr"?"fr-CA":"en-CA", long?{weekday:"long", day:"numeric", month:"long"}:{weekday:"short", day:"numeric", month:"short"}); return out.charAt(0).toUpperCase()+out.slice(1); }
 function byDate(arr){ var m={}; (arr||[]).forEach(function(x){ m[x.date]=x; }); return m; }
 function todayCheckin(){ return byDate(S.checkins)[S.today.date] || null; }
 function eventOn(d){ return byDate(S.events)[d] || null; }
@@ -392,7 +403,7 @@ function renderTrend(){
     var W=320,H=150,px=28,py=10, sx=function(x){ return px+(x/27)*(W-px-8); }, sy=function(y){ return py+(10-y)/10*(H-py-18); };
     var svg='<svg class="chart" viewBox="0 0 '+W+' '+H+'">';
     [0,3,5,10].forEach(function(g){ svg+='<line x1="'+px+'" y1="'+sy(g)+'" x2="'+(W-8)+'" y2="'+sy(g)+'" stroke="var(--line)" stroke-width="1"/><text x="'+(px-6)+'" y="'+(sy(g)+4)+'" font-size="10" text-anchor="end" fill="var(--ink-3)">'+g+'</text>'; });
-    if (S.baseline && S.baseline.b!=null) svg+='<line x1="'+px+'" y1="'+sy(S.baseline.b)+'" x2="'+(W-8)+'" y2="'+sy(S.baseline.b)+'" stroke="var(--ink-2)" stroke-dasharray="4 3" stroke-width="1.2"/><text x="'+(W-8)+'" y="'+(sy(S.baseline.b)-3)+'" font-size="9" text-anchor="end" fill="var(--ink-2)">'+esc(t("baseline_line"))+' '+S.baseline.b+'</text>';
+    if (S.baseline && S.baseline.b!=null) svg+='<line x1="'+px+'" y1="'+sy(S.baseline.b)+'" x2="'+(W-8)+'" y2="'+sy(S.baseline.b)+'" stroke="var(--ink-2)" stroke-dasharray="4 3" stroke-width="1.2"/><text x="'+(px+4)+'" y="'+(sy(S.baseline.b)-4)+'" font-size="9" text-anchor="start" fill="var(--ink-2)">'+esc(t("baseline_line"))+' '+S.baseline.b+'</text>';
     svg+='<polyline fill="none" stroke="var(--ink-2)" stroke-width="1.5" points="'+pts.map(function(p){ return sx(p.x)+","+sy(p.y); }).join(" ")+'"/>';
     pts.forEach(function(p){ svg+='<circle cx="'+sx(p.x)+'" cy="'+sy(p.y)+'" r="4" fill="var(--'+(p.c==="GREEN"?"ok":p.c==="YELLOW"?"warn":"bad")+'-fill)"/>'; });
     svg+='</svg>'; h+=svg;
