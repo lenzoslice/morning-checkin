@@ -156,6 +156,9 @@ svg.chart { width:100%; height:auto; display:block; }
 .seg { display:flex; background:var(--raised); border-radius:var(--r); padding:4px; gap:4px; }
 .seg button { flex:1; border:0; background:transparent; min-height:42px; font-weight:700; border-radius:var(--r-sm); font-family:var(--font-head); font-size:16px; color:var(--ink-3); transition:background var(--dur), color var(--dur); }
 .seg button[aria-pressed=true] { background:var(--surface); color:var(--ink); box-shadow:var(--shadow-1); }
+.seg3 button { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:52px; line-height:1.1; gap:2px; }
+.seg3 button small { font-family:var(--font-body); font-size:10.5px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--brand-ink); }
+.whycard { background:var(--raised); box-shadow:none; }
 .exrow { display:grid; grid-template-columns:30px 1fr 84px; gap:12px; align-items:start; padding:14px 0; border-top:1px solid var(--line); }
 .exrow:first-of-type { border-top:0; }
 .exrow .chk { width:28px; height:28px; border-radius:9px; border:2px solid var(--line-2); background:var(--surface); margin-top:2px; padding:0; position:relative; transition:background var(--dur), border-color var(--dur), transform var(--dur-out); }
@@ -245,7 +248,7 @@ fr: {
   lbl:{practice:"Pratique", game:"Match", day:"Journée", gym:"Gym", iso:"Isos", contact:"Contact"},
   trend_title:"28 derniers jours", counts7:"7 derniers jours", no_data:"Pas encore de données.", chart_title:"Pire score du matin",
   baseline_line:"Base B",
-  gym_title:"Séance du jour", gym_suggest:"Suggérée : séance {s}", gym_80:"80 %", load:"lb", save_gym:"Enregistrer la séance", gym_saved:"Séance enregistrée",
+  gym_title:"Séance du jour", gym_suggest:"Suggérée : séance {s}", gym_80:"80 %", gym_why:"", gym_pregame:"", gym_suggested:"", gym_last:"", load:"lb", save_gym:"Enregistrer la séance", gym_saved:"Séance enregistrée",
   install_title:"Ajouter à l'écran d'accueil", install:"iPhone : Safari → bouton Partager → « Sur l'écran d'accueil ». Android : Chrome → menu ⋮ → « Ajouter à l'écran d'accueil ».",
   adm_b:"Base B", adm_b_cur:"Actuelle", adm_b_none:"non fixée", adm_b_sug:"Suggestion (médiane des 7 premiers matins) : {s}", adm_b_set:"Fixer B", adm_b_clear:"Effacer",
   adm_b_on:"fixée le", adm_count:"{n} check-ins", adm_flags:"Signaux 7 jours",
@@ -270,7 +273,7 @@ en: {
   lbl:{practice:"Practice", game:"Game", day:"Day", gym:"Gym", iso:"Isos", contact:"Contact"},
   trend_title:"Last 28 days", counts7:"Last 7 days", no_data:"No data yet.", chart_title:"Worst morning score",
   baseline_line:"Baseline B",
-  gym_title:"Today's session", gym_suggest:"Suggested: session {s}", gym_80:"80%", load:"lb", save_gym:"Save session", gym_saved:"Session saved",
+  gym_title:"Today's session", gym_suggest:"Suggested: session {s}", gym_80:"80%", gym_why:"", gym_pregame:"", gym_suggested:"", gym_last:"", load:"lb", save_gym:"Save session", gym_saved:"Session saved",
   install_title:"Add to home screen", install:"iPhone: Safari → Share button → “Add to Home Screen”. Android: Chrome → ⋮ menu → “Add to Home screen”.",
   adm_b:"Baseline B", adm_b_cur:"Current", adm_b_none:"not set", adm_b_sug:"Suggestion (median of first 7 mornings): {s}", adm_b_set:"Set B", adm_b_clear:"Clear",
   adm_b_on:"set on", adm_count:"{n} check-ins", adm_flags:"7-day signals",
@@ -457,32 +460,41 @@ function renderTrend(){
 /* ---- Gym ---- */
 function renderGym(){
   var c=todayCheckin(), d=S.today.date, col=c?c.colour:null, gm=byDate(S.gym), todayG=gm[d], h='';
-  var lastSess=null, dates=Object.keys(gm).filter(function(x){ return x<d; }).sort(); if(dates.length) lastSess=gm[dates[dates.length-1]].session;
-  var suggested = col==="RED" ? "ISO" : (lastSess==="A"?"B":"A");
-  if (!gymUI.session || (col==="RED" && gymUI.session!=="ISO")) gymUI.session = todayG ? todayG.session : suggested;
+  var lastSess=null, lastDate=null, dates=Object.keys(gm).filter(function(x){ return x<d; }).sort();
+  if(dates.length){ lastDate=dates[dates.length-1]; lastSess=gm[lastDate].session; }
+  var gameSoon = dayTypeOn(d)==="Game" || dayTypeOn(addDays(d,1))==="Game";
+  var suggested = (col==="RED" || gameSoon) ? "ISO" : (lastSess==="A" ? "B" : "A");
+  if (!gymUI.session) gymUI.session = todayG ? todayG.session : suggested;
+  if (col==="RED") gymUI.session = "ISO";
   if (todayG && !gymUI.loaded) { gymUI.ex = {}; (todayG.exercises||[]).forEach(function(e){ gymUI.ex[e.id]={done:e.done, load:e.load}; }); gymUI.loaded=true; }
   h += '<div class="datehead"><div class="d">'+esc(t("gym_title"))+'</div>'+(col?'<span class="daypill"><i class="dot '+col+'"></i>'+esc(t("colour."+col))+'</span>':'')+'</div>';
   if (!c) h += '<p class="note" style="margin-bottom:12px">'+esc(t("gym_nocheck"))+'</p>';
   if (col==="RED") h += '<p class="note" style="margin-bottom:12px">'+esc(t("gym_red"))+'</p>';
-  else h += '<div class="seg" style="margin-bottom:12px"><button data-s="A" aria-pressed="'+(gymUI.session==="A")+'">A</button><button data-s="B" aria-pressed="'+(gymUI.session==="B")+'">B</button></div>'
-          + '<p class="small muted" style="margin:0 0 10px">'+esc(fmt(t("gym_suggest"),{s:suggested}))+' · '+esc(col==="YELLOW"?t("gym_rule_yellow"):t("gym_rule_green"))+'</p>';
+  else if (gameSoon) h += '<p class="note" style="margin-bottom:12px;border-left-color:var(--warn-fill)">'+esc(t("gym_pregame"))+'</p>';
+  if (col!=="RED") {
+    var seg = ["A","B","ISO"].map(function(k){ var lab = k==="ISO" ? esc(t("sess.ISO")).split(" ")[0] : k; var tag = (k===suggested) ? '<small>'+esc(t("gym_suggested"))+'</small>' : ''; return '<button data-s="'+k+'" aria-pressed="'+(gymUI.session===k)+'">'+lab+tag+'</button>'; }).join("");
+    h += '<div class="seg seg3" style="margin-bottom:10px">'+seg+'</div>';
+    h += '<p class="small muted" style="margin:0 0 12px">'+(lastDate ? esc(fmt(t("gym_last"),{s:lastSess, d:fmtDate(lastDate,false)}))+' · ' : '')+esc(col==="YELLOW"?t("gym_rule_yellow"):t("gym_rule_green"))+'</p>';
+  }
   var list=t("ex."+gymUI.session);
   h += '<div class="card"><h2>'+esc(t("sess."+gymUI.session))+(col==="YELLOW"&&gymUI.session!=="ISO"?'<span class="badge">'+esc(t("gym_80"))+'</span>':'')+'</h2>';
   list.forEach(function(ex){
     if (ex[4]==="sled" && col==="YELLOW") return;
     var st=gymUI.ex[ex[0]]||{};
-    h += '<div class="exrow"><button class="chk" data-id="'+ex[0]+'" role="checkbox" aria-checked="'+(!!st.done)+'"></button>'
+    h += '<div class="exrow"><button class="chk" data-id="'+ex[0]+'" role="checkbox" aria-checked="'+(!!st.done)+'" aria-label="'+esc(ex[1])+'"></button>'
        + '<div><div class="nm">'+esc(ex[1])+'</div><div class="meta">'+esc(ex[2])+'</div>'+(ex[3]?'<div class="how">'+esc(ex[3])+'</div>':'')+'</div>'
-       + '<div class="load"><input type="text" inputmode="decimal" data-id="'+ex[0]+'" aria-label="'+esc(ex[1])+' '+esc(t("load"))+'" placeholder="0" value="'+esc(st.load||"")+'"><span>'+esc(t("load"))+'</span></div></div>';
+       + (gymUI.session==="ISO" ? '<div></div>' : '<div class="load"><input type="text" inputmode="decimal" data-id="'+ex[0]+'" aria-label="'+esc(ex[1])+' '+esc(t("load"))+'" placeholder="0" value="'+esc(st.load||"")+'"><span>'+esc(t("load"))+'</span></div>')+'</div>';
   });
   h += '<button class="btn primary" id="savegym" style="margin-top:12px">'+esc(t("save_gym"))+'</button></div>';
+  if (t("gym_why")) h += '<div class="card whycard"><p class="eyebrow">A / B</p><p style="margin:0;font-size:14.5px;color:var(--ink-2)">'+esc(t("gym_why"))+'</p></div>';
   $("t-gym").innerHTML = h;
   $("t-gym").querySelectorAll(".seg button").forEach(function(b){ b.addEventListener("click", function(){ gymUI.session=b.getAttribute("data-s"); renderGym(); }); });
   $("t-gym").querySelectorAll(".chk").forEach(function(b){ b.addEventListener("click", function(){ var id=b.getAttribute("data-id"); gymUI.ex[id]=gymUI.ex[id]||{}; gymUI.ex[id].done=!gymUI.ex[id].done; renderGym(); }); });
   $("t-gym").querySelectorAll("input[data-id]").forEach(function(i){ i.addEventListener("input", function(){ var id=i.getAttribute("data-id"); gymUI.ex[id]=gymUI.ex[id]||{}; gymUI.ex[id].load=i.value; }); });
   $("savegym").addEventListener("click", function(){
     var exs=list.map(function(ex){ var st=gymUI.ex[ex[0]]||{}; return {id:ex[0], done:!!st.done, load:st.load||""}; });
-    post({action:"gym", date:d, session:gymUI.session, exercises:exs, note:null}).then(function(r){ if(!r.ok){ toast(r.error); return; } setState(r); toast(t("gym_saved")); renderAll(); });
+    var b=$("savegym"); b.disabled=true; b.classList.add("loading");
+    post({action:"gym", date:d, session:gymUI.session, exercises:exs, note:null}).then(function(r){ if(!r.ok){ toast(r.error); b.disabled=false; b.classList.remove("loading"); return; } setState(r); toast(t("gym_saved")); renderAll(); });
   });
 }
 
