@@ -214,6 +214,17 @@ ul.plain { padding-left:20px; margin:6px 0; } ul.plain li { margin-bottom:8px; }
 .upc { display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-top:1px solid var(--line); font-size:14px; }
 .upc:first-of-type { border-top:0; }
 .legend { font-size:12px; color:var(--ink-3); margin-top:6px; }
+.qsec { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--brand-ink); margin:18px 0 4px; }
+.qsec + .qintro { font-size:13.5px; color:var(--ink-2); margin:0 0 6px; }
+.orig { font-size:12.5px; color:var(--ink-3); margin:2px 0 6px; font-style:italic; }
+.opts { display:flex; flex-direction:column; gap:6px; }
+.opts button { text-align:left; min-height:44px; padding:10px 12px; border-radius:var(--r-sm); border:1.5px solid var(--line); background:var(--surface); font-size:14.5px; line-height:1.3; transition:background var(--dur), border-color var(--dur); }
+.opts button[aria-pressed=true] { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.opts button small { display:block; font-size:12px; opacity:.75; font-style:italic; margin-top:2px; }
+.chips { display:flex; flex-wrap:wrap; gap:6px; }
+.chips button { min-height:40px; padding:8px 12px; border-radius:var(--r-pill); border:1.5px solid var(--line); background:var(--surface); font-size:13.5px; text-align:left; transition:background var(--dur); }
+.chips button[aria-pressed=true] { background:var(--ok-fill); color:#fff; border-color:var(--ok-fill); }
+.blankbtn { margin-top:6px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition:none !important; animation:none !important; } }
 @media (min-width: 640px) { .wrap, .topbar-in, .tabbar-in { max-width:600px; } .picker { gap:10px; } }
 </style>
@@ -295,7 +306,7 @@ fr: {
   adm_settings:"Réglages", adm_phone:"Numéro pour le bouton Texter", adm_upcoming:"Prochaines dates", confirm_del:"Supprimer ?",
   /* condition-specific text (test_how, q_settled, q_dlp, calib, act, ex, sess, info, coach_line, text_contact, sms_body…) is merged from the server after sign-in */
   test_how:"", q_settled:"", q_dlp:"", calib:"", text_contact:"", show_coach:"", coach_line:"", flag_week:"", gym_red:"", gym_nocheck:"",
-  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", adm_review:"", sms_body:"{c} {l}/{r}",
+  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_denoms:null, q_sections:{}, q_blank:"", q_source:"", q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_denoms:null, q_sections:{}, q_blank:"", q_source:"", q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", adm_review:"", sms_body:"{c} {l}/{r}",
   sess:{A:"A",B:"B",ISO:"ISO"}, ex:{A:[],B:[],ISO:[]}, act:{GREEN:{},YELLOW:{},RED:{}}
 },
 en: {
@@ -462,6 +473,9 @@ function renderToday(){
   if (el=$("pgOpen")) el.addEventListener("click", function(){ form.pgOpen=true; renderToday(); });
   if (el=$("pgEdit")) el.addEventListener("click", function(){ form.pgOpen=true; form.pgl=c.pregame_l; form.pgr=c.pregame_r; renderToday(); });
   if (el=$("savepg")) el.addEventListener("click", function(){ saveWith("savepg", {action:"pregame", date:d, l:form.pgl, r:form.pgr}, function(){ form.pgOpen=false; form.pgl=null; form.pgr=null; }); });
+  $("t-today").querySelectorAll("[data-qo]").forEach(function(b){ b.addEventListener("click", function(){ form.q[b.getAttribute("data-qo")]=+b.getAttribute("data-v"); renderToday(); }); });
+  $("t-today").querySelectorAll("[data-qc]").forEach(function(b){ b.addEventListener("click", function(){ var id=b.getAttribute("data-qc"), v=+b.getAttribute("data-v"), arr=(form.q[id]||[]).slice(), i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); form.q[id]=arr; renderToday(); }); });
+  $("t-today").querySelectorAll("[data-qb]").forEach(function(b){ b.addEventListener("click", function(){ var id=b.getAttribute("data-qb"); form.q[id] = (form.q[id]===null) ? undefined : null; renderToday(); }); });
   if (el=$("saveq")) el.addEventListener("click", function(){ var sc=qScores(qItems(), form.q); saveWith("saveq", {action:"questionnaire", date:today, pg:sc.pain_general, fn:sc.function, pl:sc.pain_loading, answers:form.q, instrument:((T[LANG].q_items&&T[LANG].q_items.length)?"tendins-p":"proxy3")}, function(){ form.q={}; toast(t("q_saved")); }); });
 }
 function saveWith(btnId, body, after){
@@ -501,18 +515,35 @@ function pregameHTML(c, d){
 function qItems(){
   var items = T[LANG].q_items; if (items && items.length) return items;
   var subs=["pain_general","function","pain_loading"];
-  return t("q_labels").map(function(lab,i){ return {id:"p"+i, sub:subs[i], text:lab, min:0, max:10}; });
+  return t("q_labels").map(function(lab,i){ return {id:"p"+i, sub:subs[i], type:"nrs", text:lab, min:0, max:10}; });
 }
+function qItemMax(it){ if (it.type==="nrs") return (it.max!=null?it.max:10); if (it.type==="choice") return Math.max.apply(null, it.options.map(function(o){ return o.v; })); return 0; }
 function qScores(items, ans){
   var sums={pain_general:[0,0],function:[0,0],pain_loading:[0,0]};
-  items.forEach(function(it){ var v=ans[it.id]; if(v==null) return; var max=(it.max!=null?it.max:10), min=(it.min||0), val=it.reverse ? (max - v + min) : v; sums[it.sub][0]+= (val-min); sums[it.sub][1]+= (max-min); });
-  var out={}; Object.keys(sums).forEach(function(k){ out[k]= sums[k][1] ? Math.round(sums[k][0]/sums[k][1]*100) : 0; }); return out;
+  items.forEach(function(it){ if(!sums[it.sub]) return; var max=qItemMax(it), v=ans[it.id]; var val=(v==null)?0:v; if(it.reverse) val=max-val; sums[it.sub][0]+=val; sums[it.sub][1]+=max; });
+  var den=T[LANG].q_denoms||{}, out={}; Object.keys(sums).forEach(function(k){ var d=den[k]||sums[k][1]; out[k]= d ? Math.round(sums[k][0]/d*100) : 0; }); return out;
+}
+function qComplete(items, ans){
+  return items.every(function(it){ if(it.type==="check") return true; var v=ans[it.id]; if (v===undefined) return false; if (v===null) return !!it.blank_ok; return true; });
 }
 function questionnaireHTML(){
-  var items=qItems(), h='<div class="card"><h2>'+esc(t("q_title"))+'</h2><p class="small muted" style="margin:0 0 4px">'+esc(t("q_intro"))+'</p>';
-  items.forEach(function(it){ h += '<div class="qrow"><div class="t">'+esc(it.text)+'</div>'+(it.anchors?'<div class="small muted" style="display:flex;justify-content:space-between;margin-bottom:4px"><span>'+esc(it.anchors[0])+'</span><span>'+esc(it.anchors[1])+'</span></div>':'')+pickerRange("q:"+it.id, form.q[it.id], it.min||0, it.max!=null?it.max:10)+'</div>'; });
-  var ok = items.every(function(it){ return form.q[it.id]!=null; });
-  return h+'<button class="btn primary" id="saveq" style="margin-top:14px"'+(ok?"":" disabled")+'>'+esc(t("adm_save"))+'</button></div>';
+  var items=qItems(), secs=t("q_sections")||{}, seen={}, h='<div class="card"><h2>'+esc(t("q_title"))+'</h2><p class="small muted" style="margin:0 0 4px">'+esc(t("q_intro"))+'</p>';
+  items.forEach(function(it){
+    if (it.sub!=="anchor" && !seen[it.sub]) { seen[it.sub]=1; if (secs[it.sub]) { var parts=String(secs[it.sub]).split(". "); h += '<div class="qsec">'+esc(parts[0])+'</div><p class="qintro">'+esc(parts.slice(1).join(". "))+'</p>'; } }
+    h += '<div class="qrow"><div class="t">'+esc(it.text)+'</div>'+(it.orig?'<div class="orig">'+esc(it.orig)+'</div>':'');
+    if (it.type==="check") {
+      var sel=form.q[it.id]||[];
+      h += '<div class="chips">'+it.options.map(function(o){ return '<button data-qc="'+it.id+'" data-v="'+o.v+'" aria-pressed="'+(sel.indexOf(o.v)>=0)+'">'+esc(o.t)+'</button>'; }).join("")+'</div>';
+    } else if (it.type==="choice") {
+      h += '<div class="opts">'+it.options.map(function(o){ return '<button data-qo="'+it.id+'" data-v="'+o.v+'" aria-pressed="'+(form.q[it.id]===o.v)+'">'+esc(o.t)+(o.orig?'<small>'+esc(o.orig)+'</small>':'')+'</button>'; }).join("")+'</div>';
+    } else {
+      h += (it.anchors?'<div class="small muted" style="display:flex;justify-content:space-between;margin-bottom:4px"><span>'+esc(it.anchors[0])+'</span><span>'+esc(it.anchors[1])+'</span></div>':'')+pickerRange("q:"+it.id, form.q[it.id], it.min||0, it.max!=null?it.max:10);
+      if (it.blank_ok) h += '<button class="btn sm ghost blankbtn" data-qb="'+it.id+'" aria-pressed="'+(form.q[it.id]===null)+'">'+(form.q[it.id]===null?"✓ ":"")+esc(t("q_blank"))+'</button>';
+    }
+    h += '</div>';
+  });
+  if (t("q_source")) h += '<p class="small muted" style="margin:14px 0 0">'+esc(t("q_source"))+'</p>';
+  return h+'<button class="btn primary" id="saveq" style="margin-top:14px"'+(qComplete(items, form.q)?"":" disabled")+'>'+esc(t("adm_save"))+'</button></div>';
 }
 function pickerRange(k, v, min, max){
   var h='<div class="picker">'; for (var i=min;i<=max;i++) h+='<button class="n'+Math.round(i*10/Math.max(1,max))+'" data-k="'+k+'" data-v="'+i+'" aria-pressed="'+(v===i)+'">'+i+'</button>'; return h+'</div>';
