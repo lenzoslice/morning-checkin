@@ -225,6 +225,36 @@ ul.plain { padding-left:20px; margin:6px 0; } ul.plain li { margin-bottom:8px; }
 .chips button { min-height:40px; padding:8px 12px; border-radius:var(--r-pill); border:1.5px solid var(--line); background:var(--surface); font-size:13.5px; text-align:left; transition:background var(--dur); }
 .chips button[aria-pressed=true] { background:var(--ok-fill); color:#fff; border-color:var(--ok-fill); }
 .blankbtn { margin-top:6px; }
+.ro button { pointer-events:none; }
+.calnav { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.calnav b { font-family:var(--font-head); font-size:16px; font-weight:700; }
+.calnav button { min-width:44px; min-height:44px; border-radius:var(--r-pill); background:var(--raised); font-size:22px; line-height:1; color:var(--ink); }
+.cal { display:grid; grid-template-columns:repeat(7, 1fr); gap:5px; }
+.cal .cell { position:relative; aspect-ratio:1; border-radius:var(--r-sm); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; background:var(--raised); color:var(--ink-2); font-variant-numeric:tabular-nums; padding:0; border:0; transition:box-shadow var(--dur); }
+.cal .cell.dow { aspect-ratio:auto; background:transparent; font-size:11px; letter-spacing:.04em; color:var(--ink-3); pointer-events:none; }
+.cal .cell.empty { background:transparent; pointer-events:none; }
+.cal .cell.ev { background:var(--surface); box-shadow:var(--shadow-1); color:var(--ink); }
+.cal .cell.Game { background:var(--brand-tint); color:var(--brand-ink); }
+.cal .cell.GREEN { background:var(--ok-fill); color:#fff; }
+.cal .cell.YELLOW { background:var(--warn-fill); color:#fff; }
+.cal .cell.RED { background:var(--bad-fill); color:#fff; }
+.cal .cell.today { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
+.cal .cell.sel { outline:2.5px solid var(--focus); outline-offset:2px; }
+.cal .cell .b { position:absolute; right:3px; bottom:1px; font-size:9px; font-weight:800; letter-spacing:.02em; opacity:.95; }
+.cal .cell .qd { position:absolute; left:3px; top:3px; width:8px; height:8px; border-radius:50%; background:#2F6F9F; box-shadow:0 0 0 1.5px var(--surface); }
+.callegend { display:flex; flex-wrap:wrap; gap:6px 12px; font-size:12px; color:var(--ink-3); margin-top:10px; }
+.callegend b { font-weight:800; color:var(--ink-2); }
+.callegend .qd { display:inline-block; width:8px; height:8px; border-radius:50%; background:#2F6F9F; margin-right:4px; }
+.dayd { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+.dayd .dh { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+.dayd .dh b { font-family:var(--font-head); font-size:16px; }
+.dayd .ttl { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); font-weight:700; margin:10px 0 2px; }
+ol.plan { margin:4px 0 0; padding:0; list-style:none; counter-reset:p; }
+ol.plan li { counter-increment:p; display:flex; gap:10px; padding:8px 0; border-top:1px solid var(--line); font-size:14.5px; line-height:1.4; }
+ol.plan li:first-child { border-top:0; }
+ol.plan li::before { content:counter(p); flex:0 0 24px; height:24px; border-radius:50%; background:var(--ink); color:var(--bg); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+.planq { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:10px; padding:10px 12px; border-radius:var(--r-sm); background:#EAF2F8; color:#1F4E6E; font-size:14px; font-weight:600; }
+@media (prefers-color-scheme: dark) { .planq { background:#1B2F3F; color:#BFDCF2; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition:none !important; animation:none !important; } }
 @media (min-width: 640px) { .wrap, .topbar-in, .tabbar-in { max-width:600px; } .picker { gap:10px; } }
 </style>
@@ -281,13 +311,15 @@ var form = { l: null, r: null, settled: true, dlp: false, editing: false, date: 
 var FAST = (location.hostname !== "lenzoslice.github.io") && /fast=1/.test(location.search);
 var ISO = null;
 var gymUI = { session: null, ex: {} };
+var CAL = { month: null, sel: null };
+var QV = null;
 
 /* ---------------- i18n ---------------- */
 var T = {
 fr: {
   lock_title:"Bonjour", lock_msg:"Entre ton code à 4 chiffres.", lock_pin:"Code", lock_btn:"Entrer", signout:"Déconnexion",
   bad_code:"Ce code n'est pas reconnu.", locked_out:"Trop d'essais — attends 15 minutes.", offline:"Pas de connexion. Réessaie.",
-  tabs:{today:"Aujourd'hui", trend:"Tendance", gym:"Gym", info:"Info", admin:"Suivi"},
+  tabs:{today:"Aujourd'hui", trend:"Saison", gym:"Gym", info:"Info", admin:"Suivi"},
   colour:{GREEN:"VERT", YELLOW:"JAUNE", RED:"ROUGE"},
   day:{Practice:"Pratique", Game:"Match", Travel:"Voyage", Exams:"Examens", Off:"Repos"},
   left:"Gauche", right:"Droite", pain_scale:"0 = rien · 10 = pire",
@@ -296,6 +328,7 @@ fr: {
   lbl:{practice:"Pratique", game:"Match", day:"Journée", gym:"Gym", iso:"Isos", contact:"Contact"},
   trend_title:"28 derniers jours", counts7:"7 derniers jours", no_data:"Pas encore de données.", chart_title:"Pire score du matin",
   baseline_line:"Base B",
+  cal_title:"Calendrier de la saison", cal_plan:"Ce jour-là", cal_logged:"Noté", cal_badges:{Game:"M", Practice:"P", Travel:"V", Exams:"E"}, close:"Fermer", today_plan:"Voir mon plan du jour", cal_none:"Rien de prévu avec l'équipe.",
   gym_title:"Séance du jour", gym_suggest:"Suggérée : séance {s}", gym_80:"80 %", gym_why:"", gym_pregame:"", gym_suggested:"", gym_last:"", load:"lb", save_gym:"Enregistrer la séance", gym_saved:"Séance enregistrée",
   install_title:"Ajouter à l'écran d'accueil", install:"iPhone : Safari → bouton Partager → « Sur l'écran d'accueil ». Android : Chrome → menu ⋮ → « Ajouter à l'écran d'accueil ».",
   adm_b:"Base B", adm_b_cur:"Actuelle", adm_b_none:"non fixée", adm_b_sug:"Suggestion (médiane des 7 premiers matins) : {s}", adm_b_set:"Fixer B", adm_b_clear:"Effacer",
@@ -306,13 +339,13 @@ fr: {
   adm_settings:"Réglages", adm_phone:"Numéro pour le bouton Texter", adm_upcoming:"Prochaines dates", confirm_del:"Supprimer ?",
   /* condition-specific text (test_how, q_settled, q_dlp, calib, act, ex, sess, info, coach_line, text_contact, sms_body…) is merged from the server after sign-in */
   test_how:"", q_settled:"", q_dlp:"", calib:"", text_contact:"", show_coach:"", coach_line:"", flag_week:"", gym_red:"", gym_nocheck:"",
-  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_denoms:null, q_sections:{}, q_blank:"", q_source:"", q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_denoms:null, q_sections:{}, q_blank:"", q_source:"", q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", adm_review:"", sms_body:"{c} {l}/{r}", send_lens:"", call_lens:"", contact_title:"", sms_red:"", sms_yellow_game:"", sms_yellow2:"", sms_pregame:"", sms_evening:"", sms_iso:"", sms_q:"", sms_generic:"", sms_dlp:"", q_today:"",
+  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_denoms:null, q_sections:{}, q_blank:"", q_source:"", q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_denoms:null, q_sections:{}, q_blank:"", q_source:"", q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", adm_review:"", plan:{}, q_short:"Q", q_card_title:"", q_card_intro:"", q_next:"{d}", q_now:"", q_last:"{d}", q_view:"", q_fill:"", q_preview_note:"{d}", q_fill_anyway:"", sms_body:"{c} {l}/{r}", send_lens:"", call_lens:"", contact_title:"", sms_red:"", sms_yellow_game:"", sms_yellow2:"", sms_pregame:"", sms_evening:"", sms_iso:"", sms_q:"", sms_generic:"", sms_dlp:"", q_today:"",
   sess:{A:"A",B:"B",ISO:"ISO"}, ex:{A:[],B:[],ISO:[]}, act:{GREEN:{},YELLOW:{},RED:{}}
 },
 en: {
   lock_title:"Hello", lock_msg:"Enter your 4-digit code.", lock_pin:"Code", lock_btn:"Enter", signout:"Sign out",
   bad_code:"That code isn't recognised.", locked_out:"Too many tries — wait 15 minutes.", offline:"No connection. Try again.",
-  tabs:{today:"Today", trend:"Trend", gym:"Gym", info:"Info", admin:"Dashboard"},
+  tabs:{today:"Today", trend:"Season", gym:"Gym", info:"Info", admin:"Dashboard"},
   colour:{GREEN:"GREEN", YELLOW:"YELLOW", RED:"RED"},
   day:{Practice:"Practice", Game:"Game", Travel:"Travel", Exams:"Exams", Off:"Off"},
   left:"Left", right:"Right", pain_scale:"0 = none · 10 = worst",
@@ -321,6 +354,7 @@ en: {
   lbl:{practice:"Practice", game:"Game", day:"Day", gym:"Gym", iso:"Isos", contact:"Contact"},
   trend_title:"Last 28 days", counts7:"Last 7 days", no_data:"No data yet.", chart_title:"Worst morning score",
   baseline_line:"Baseline B",
+  cal_title:"Season calendar", cal_plan:"On that day", cal_logged:"Logged", cal_badges:{Game:"G", Practice:"P", Travel:"T", Exams:"X"}, close:"Close", today_plan:"See my plan for today", cal_none:"Nothing scheduled with the team.",
   gym_title:"Today's session", gym_suggest:"Suggested: session {s}", gym_80:"80%", gym_why:"", gym_pregame:"", gym_suggested:"", gym_last:"", load:"lb", save_gym:"Save session", gym_saved:"Session saved",
   install_title:"Add to home screen", install:"iPhone: Safari → Share button → “Add to Home Screen”. Android: Chrome → ⋮ menu → “Add to Home screen”.",
   adm_b:"Baseline B", adm_b_cur:"Current", adm_b_none:"not set", adm_b_sug:"Suggestion (median of first 7 mornings): {s}", adm_b_set:"Set B", adm_b_clear:"Clear",
@@ -330,7 +364,7 @@ en: {
   adm_events:"Schedule", adm_ev_add:"Add / edit a date", adm_ev_time:"Time", adm_ev_detail:"Detail", adm_save:"Save",
   adm_settings:"Settings", adm_phone:"Number for the Text button", adm_upcoming:"Upcoming dates", confirm_del:"Delete?",
   test_how:"", q_settled:"", q_dlp:"", calib:"", text_contact:"", show_coach:"", coach_line:"", flag_week:"", gym_red:"", gym_nocheck:"",
-  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], adm_review:"", sms_body:"{c} {l}/{r}", send_lens:"", call_lens:"", contact_title:"", sms_red:"", sms_yellow_game:"", sms_yellow2:"", sms_pregame:"", sms_evening:"", sms_iso:"", sms_q:"", sms_generic:"", sms_dlp:"", q_today:"",
+  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], adm_review:"", plan:{}, q_short:"Q", q_card_title:"", q_card_intro:"", q_next:"{d}", q_now:"", q_last:"{d}", q_view:"", q_fill:"", q_preview_note:"{d}", q_fill_anyway:"", sms_body:"{c} {l}/{r}", send_lens:"", call_lens:"", contact_title:"", sms_red:"", sms_yellow_game:"", sms_yellow2:"", sms_pregame:"", sms_evening:"", sms_iso:"", sms_q:"", sms_generic:"", sms_dlp:"", q_today:"",
   sess:{A:"A",B:"B",ISO:"ISO"}, ex:{A:[],B:[],ISO:[]}, act:{GREEN:{},YELLOW:{},RED:{}}
 }};
 function t(k){ var o=T[LANG]; k.split(".").forEach(function(p){ o = o==null?null:o[p]; }); return o==null?k:o; }
@@ -437,6 +471,7 @@ function renderToday(){
   if (!form.date && !m[y] && firstD && firstD < y) h += '<div class="nudge"><span>'+esc(t("missed_title"))+'</span><button class="btn" id="enterY">'+esc(t("missed_btn"))+'</button></div>';
   var sk=streakCount();
   h += '<div class="datehead"><div><div class="d">'+esc(fmtDate(d,true))+'</div>'+(sk>=2&&!form.date?'<span class="streak">'+SVG.today.replace('<svg','<svg width="14" height="14"')+esc(fmt(t("streak"),{n:sk}))+'</span>':'')+'</div><span class="daypill">'+esc(dayLabel(d))+'</span></div>';
+  if (!form.date) h += '<p class="small" style="margin:-8px 0 12px"><button class="linkbtn" id="planLink">'+esc(t("today_plan"))+' →</button></p>';
   if (c && !form.editing) {
     h += resultHTML(c, d);
     h += '<p class="small muted" style="text-align:center;margin:0 0 16px"><button class="linkbtn" id="editck">'+esc(t("edit"))+'</button>'+(form.date?' · <button class="linkbtn" id="backToday">'+esc(t("tabs.today"))+'</button>':'')+'</p>';
@@ -458,6 +493,7 @@ function renderToday(){
   if (S.baseline && S.baseline.b==null && (S.baseline.count||0) < 7) h += '<p class="note">'+esc(t("calib"))+'</p>';
   $("t-today").innerHTML = h;
   var el;
+  if (el=$("planLink")) el.addEventListener("click", function(){ CAL.sel=S.today.date; CAL.month=S.today.date.slice(0,7); TAB="trend"; renderTrend(); showTab(); });
   if (el=$("enterY")) el.addEventListener("click", function(){ form.date=y; form.editing=true; form.l=null; form.r=null; form.settled=true; form.dlp=false; form.note=""; form.showNote=false; renderToday(); });
   if (el=$("backToday")) el.addEventListener("click", function(){ form.date=null; form.editing=false; form.l=null; renderToday(); });
   if (el=$("cancelck")) el.addEventListener("click", function(){ form.date=null; form.editing=false; form.l=null; renderToday(); });
@@ -475,10 +511,21 @@ function renderToday(){
   if (el=$("pgOpen")) el.addEventListener("click", function(){ form.pgOpen=true; renderToday(); });
   if (el=$("pgEdit")) el.addEventListener("click", function(){ form.pgOpen=true; form.pgl=c.pregame_l; form.pgr=c.pregame_r; renderToday(); });
   if (el=$("savepg")) el.addEventListener("click", function(){ saveWith("savepg", {action:"pregame", date:d, l:form.pgl, r:form.pgr}, function(){ form.pgOpen=false; form.pgl=null; form.pgr=null; }); });
-  $("t-today").querySelectorAll("[data-qo]").forEach(function(b){ b.addEventListener("click", function(){ form.q[b.getAttribute("data-qo")]=+b.getAttribute("data-v"); renderToday(); }); });
-  $("t-today").querySelectorAll("[data-qc]").forEach(function(b){ b.addEventListener("click", function(){ var id=b.getAttribute("data-qc"), v=+b.getAttribute("data-v"), arr=(form.q[id]||[]).slice(), i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); form.q[id]=arr; renderToday(); }); });
-  $("t-today").querySelectorAll("[data-qb]").forEach(function(b){ b.addEventListener("click", function(){ var id=b.getAttribute("data-qb"); form.q[id] = (form.q[id]===null) ? undefined : null; renderToday(); }); });
-  if (el=$("saveq")) el.addEventListener("click", function(){ var sc=qScores(qItems(), form.q); saveWith("saveq", {action:"questionnaire", date:today, pg:sc.pain_general, fn:sc.function, pl:sc.pain_loading, answers:form.q, instrument:((T[LANG].q_items&&T[LANG].q_items.length)?"tendins-p":"proxy3")}, function(){ form.q={}; toast(t("q_saved")); }); });
+  bindQ($("t-today"), renderToday, false, null);
+}
+/* questionnaire handlers shared by the Today card and the full-screen sheet */
+function bindQ(root, rerender, withPicker, onSaved){
+  if (withPicker) root.querySelectorAll(".picker button[data-k^='q:']").forEach(function(b){ b.addEventListener("click", function(){ form.q[b.getAttribute("data-k").slice(2)]=+b.getAttribute("data-v"); rerender(); }); });
+  root.querySelectorAll("[data-qo]").forEach(function(b){ b.addEventListener("click", function(){ form.q[b.getAttribute("data-qo")]=+b.getAttribute("data-v"); rerender(); }); });
+  root.querySelectorAll("[data-qc]").forEach(function(b){ b.addEventListener("click", function(){ var id=b.getAttribute("data-qc"), v=+b.getAttribute("data-v"), arr=(form.q[id]||[]).slice(), i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); form.q[id]=arr; rerender(); }); });
+  root.querySelectorAll("[data-qb]").forEach(function(b){ b.addEventListener("click", function(){ var id=b.getAttribute("data-qb"); form.q[id] = (form.q[id]===null) ? undefined : null; rerender(); }); });
+  var sb=root.querySelector("[data-saveq]"); if (sb) sb.addEventListener("click", function(){
+    var sc=qScores(qItems(), form.q); sb.disabled=true; sb.classList.add("loading");
+    post({action:"questionnaire", date:S.today.date, pg:sc.pain_general, fn:sc.function, pl:sc.pain_loading, answers:form.q, instrument:((T[LANG].q_items&&T[LANG].q_items.length)?"tendins-p":"proxy3")}).then(function(r){
+      if(!r.ok){ toast(r.error==="offline"?t("offline"):r.error); sb.disabled=false; sb.classList.remove("loading"); return; }
+      setState(r); form.q={}; toast(t("q_saved")); if(onSaved) onSaved(); renderAll();
+    });
+  });
 }
 function saveWith(btnId, body, after){
   var b=$(btnId); if(b){ b.disabled=true; b.classList.add("loading"); }
@@ -529,8 +576,8 @@ function qScores(items, ans){
 function qComplete(items, ans){
   return items.every(function(it){ if(it.type==="check") return true; var v=ans[it.id]; if (v===undefined) return false; if (v===null) return !!it.blank_ok; return true; });
 }
-function questionnaireHTML(){
-  var items=qItems(), secs=t("q_sections")||{}, seen={}, h='<div class="card"><h2>'+esc(t("q_title"))+'</h2><p class="small muted" style="margin:0 0 4px">'+esc(t("q_intro"))+'</p>';
+function questionnaireHTML(readonly){
+  var items=qItems(), secs=t("q_sections")||{}, seen={}, h='<div class="card'+(readonly?' ro':'')+'"><h2>'+esc(t("q_title"))+'</h2><p class="small muted" style="margin:0 0 4px">'+esc(t("q_intro"))+'</p>';
   items.forEach(function(it){
     if (it.sub!=="anchor" && !seen[it.sub]) { seen[it.sub]=1; if (secs[it.sub]) { var parts=String(secs[it.sub]).split(". "); h += '<div class="qsec">'+esc(parts[0])+'</div><p class="qintro">'+esc(parts.slice(1).join(". "))+'</p>'; } }
     h += '<div class="qrow"><div class="t">'+esc(it.text)+'</div>'+(it.orig?'<div class="orig">'+esc(it.orig)+'</div>':'');
@@ -546,7 +593,26 @@ function questionnaireHTML(){
     h += '</div>';
   });
   if (t("q_source")) h += '<p class="small muted" style="margin:14px 0 0">'+esc(t("q_source"))+'</p>';
-  return h+'<button class="btn primary" id="saveq" style="margin-top:14px"'+(qComplete(items, form.q)?"":" disabled")+'>'+esc(t("adm_save"))+'</button></div>';
+  return h+(readonly?'':'<button class="btn primary" data-saveq style="margin-top:14px"'+(qComplete(items, form.q)?"":" disabled")+'>'+esc(t("adm_save"))+'</button>')+'</div>';
+}
+/* ---- TENDINS-P sheet (preview any time; editable when due or on request) ---- */
+function qDueDates(from, to){
+  var qs=S.questionnaire||[], last=qs.length?qs[qs.length-1].date:null, first=S.checkins.length?S.checkins[0].date:null, today=S.today.date;
+  var a = last ? addDays(last,14) : (first ? addDays(first,7) : null); if(!a) return [];
+  if (S.q_due || a<today) a=today;
+  var out=[], d=a; while (d<=to) { if (d>=from) out.push(d); d=addDays(d,14); } return out;
+}
+function nextQ(){ return qDueDates(S.today.date, addDays(S.today.date,400))[0] || null; }
+function openQ(edit){ if(ISO) return; QV={edit:!!edit}; form.q={}; $("sheet").classList.remove("hidden"); document.body.style.overflow="hidden"; renderQ(); window.scrollTo(0,0); }
+function closeQ(){ QV=null; $("sheet").classList.add("hidden"); document.body.style.overflow=""; }
+function renderQ(){
+  if(!QV) return; var s=$("sheet"), nq=nextQ(), h='<div class="top"><h2>'+esc(t("q_title"))+'</h2><button class="btn sm ghost" id="qClose">'+esc(t("close"))+'</button></div>';
+  if (!QV.edit) h += '<p class="note" style="margin-bottom:12px">'+esc(fmt(t("q_preview_note"),{d:nq?fmtDate(nq,true):"–"}))+' <button class="linkbtn" id="qFill">'+esc(t("q_fill_anyway"))+'</button></p>';
+  h += questionnaireHTML(!QV.edit);
+  s.innerHTML=h; s.scrollTop=0;
+  var el; if (el=$("qClose")) el.addEventListener("click", closeQ);
+  if (el=$("qFill")) el.addEventListener("click", function(){ QV.edit=true; renderQ(); });
+  bindQ(s, renderQ, true, closeQ);
 }
 function pickerRange(k, v, min, max){
   var h='<div class="picker">'; for (var i=min;i<=max;i++) h+='<button class="n'+Math.round(i*10/Math.max(1,max))+'" data-k="'+k+'" data-v="'+i+'" aria-pressed="'+(v===i)+'">'+i+'</button>'; return h+'</div>';
@@ -641,7 +707,8 @@ function renderTrend(){
   var m=byDate(S.checkins), d=S.today.date, days=[], i;
   for (i=27;i>=0;i--) days.push(addDays(d,-i));
   var dow = LANG==="fr" ? ["D","L","M","M","J","V","S"] : ["S","M","T","W","T","F","S"];
-  var first=parseD(days[0]).getDay(), h='<div class="card"><h2>'+esc(t("trend_title"))+'</h2><div class="strip">';
+  var first=parseD(days[0]).getDay(), h=calendarCard();
+  h += '<div class="card"><h2>'+esc(t("trend_title"))+'</h2><div class="strip">';
   for (i=0;i<7;i++) h+='<div class="cell dow">'+dow[(first+i)%7]+'</div>';
   days.forEach(function(x){ var c=m[x]; h+='<div class="cell '+(c?c.colour:"")+(x===d?" today":"")+'" title="'+x+'">'+parseD(x).getDate()+'</div>'; });
   h += '</div>';
@@ -665,6 +732,48 @@ function renderTrend(){
   }
   h += '</div>';
   $("t-trend").innerHTML = h;
+  var el;
+  $("t-trend").querySelectorAll("[data-cal]").forEach(function(b){ b.addEventListener("click", function(){ var y=+CAL.month.slice(0,4), mo=+CAL.month.slice(5,7)+(+b.getAttribute("data-cal")); var dt=new Date(y, mo-1, 1); CAL.month=dt.getFullYear()+"-"+("0"+(dt.getMonth()+1)).slice(-2); renderTrend(); }); });
+  $("t-trend").querySelectorAll("[data-day]").forEach(function(b){ b.addEventListener("click", function(){ CAL.sel=b.getAttribute("data-day"); renderTrend(); var dd=$("dayd"); if(dd) dd.scrollIntoView({block:"nearest"}); }); });
+  if (el=$("calQ")) el.addEventListener("click", function(){ openQ(!!S.q_due); });
+}
+
+/* ---- Season calendar ---- */
+function calendarCard(){
+  var today=S.today.date; if(!CAL.month) CAL.month=today.slice(0,7); if(!CAL.sel) CAL.sel=today;
+  var y=+CAL.month.slice(0,4), mo=+CAL.month.slice(5,7), nd=new Date(y,mo,0).getDate(), first=CAL.month+"-01", m=byDate(S.checkins), ev=byDate(S.events), bd=t("cal_badges")||{};
+  var qd={}; qDueDates(first, CAL.month+"-"+nd).forEach(function(x){ qd[x]=1; });
+  var mn=new Date(y,mo-1,1).toLocaleDateString(LANG==="fr"?"fr-CA":"en-CA",{month:"long",year:"numeric"}); mn=mn.charAt(0).toUpperCase()+mn.slice(1);
+  var dow = LANG==="fr" ? ["L","M","M","J","V","S","D"] : ["M","T","W","T","F","S","S"], i;
+  var h='<div class="card"><h2>'+esc(t("cal_title"))+'</h2><div class="calnav"><button data-cal="-1" aria-label="previous month">‹</button><b>'+esc(mn)+'</b><button data-cal="1" aria-label="next month">›</button></div><div class="cal">';
+  for (i=0;i<7;i++) h+='<div class="cell dow">'+dow[i]+'</div>';
+  var lead=(parseD(first).getDay()+6)%7; for (i=0;i<lead;i++) h+='<div class="cell empty"></div>';
+  for (i=1;i<=nd;i++) {
+    var d=CAL.month+"-"+("0"+i).slice(-2), c=m[d], e=ev[d], cls="cell";
+    if (c) cls+=" "+c.colour; else if (e) cls+=" ev "+e.etype;
+    if (d===today) cls+=" today"; if (d===CAL.sel) cls+=" sel";
+    h += '<button class="'+cls+'" data-day="'+d+'" aria-label="'+d+'">'+i+(e&&bd[e.etype]?'<span class="b">'+esc(bd[e.etype])+'</span>':'')+(qd[d]?'<span class="qd"></span>':'')+'</button>';
+  }
+  h += '</div><div class="callegend">'+["Game","Practice","Travel","Exams"].map(function(k){ return '<span><b>'+esc(bd[k]||"")+'</b> '+esc(t("day."+k))+'</span>'; }).join("")+'<span><i class="qd"></i>'+esc(t("q_short"))+'</span></div>';
+  h += dayDetailHTML(CAL.sel, qDueDates(CAL.sel, CAL.sel).length>0);
+  return h+'</div>';
+}
+function dayDetailHTML(d, isQ){
+  var today=S.today.date, c=byDate(S.checkins)[d], g=byDate(S.gym)[d], typ=dayTypeOn(d), e=eventOn(d), h='<div class="dayd" id="dayd"><div class="dh"><b>'+esc(fmtDate(d,true))+'</b><span class="daypill">'+(c?'<i class="dot '+c.colour+'"></i>':'')+esc(dayLabel(d))+'</span></div>';
+  if (c) {
+    var bits=[fmt(t("scores"),{l:c.l,r:c.r})]; if (c.pregame_l!=null) bits.push(t("pregame_title")+" : "+c.pregame_l+"/"+c.pregame_r); if (c.session_pain!=null) bits.push(fmt(t("evening_saved"),{p:c.session_pain, m:(c.minutes!=null?" · "+c.minutes+" min":"")})); if (g) bits.push(t("sess."+g.session));
+    h += '<div class="ttl">'+esc(t("cal_logged"))+'</div><p class="small" style="margin:0">'+esc(bits.join(" · "))+'</p>';
+  }
+  if (d>=today) {
+    var plan=T[LANG].plan||{}, steps=plan[typ]||plan.Off||[];
+    h += '<div class="ttl">'+esc(t("cal_plan"))+'</div>';
+    if (!e && typ==="Off") h += '<p class="small muted" style="margin:0 0 4px">'+esc(t("cal_none"))+'</p>';
+    if (steps.length) h += '<ol class="plan">'+steps.map(function(x){ return '<li><span>'+esc(x)+'</span></li>'; }).join("")+'</ol>';
+    if (typ!=="Game" && dayTypeOn(addDays(d,1))==="Game" && plan.before_game) h += '<p class="note" style="margin-top:10px;border-left-color:var(--warn-fill)">'+esc(plan.before_game)+'</p>';
+    if (dayTypeOn(addDays(d,-1))==="Game" && plan.after_game) h += '<p class="note" style="margin-top:10px">'+esc(plan.after_game)+'</p>';
+  }
+  if (isQ && (T[LANG].plan||{}).q_due) h += '<div class="planq"><span>'+esc(T[LANG].plan.q_due)+'</span><button class="btn sm" id="calQ">'+esc(S.q_due&&d===today?t("q_fill"):t("q_view"))+'</button></div>';
+  return h+'</div>';
 }
 
 function mondayOf(s){ var d=parseD(s), k=(d.getDay()+6)%7; return addDays(s,-k); }
@@ -764,10 +873,14 @@ function renderGym(){
 function renderInfo(){
   var h='<div class="card"><h2>'+esc(t("info_title"))+'</h2><ul class="plain">'+t("info").map(function(x){ return '<li>'+esc(x)+'</li>'; }).join("")+'</ul></div>';
   if (t("iso_title")) h += '<div class="card"><h2>'+esc(t("iso_title"))+'</h2><ul class="plain">'+t("iso_when").map(function(x){ return '<li>'+esc(x)+'</li>'; }).join("")+'</ul></div>';
+  if (t("q_card_title")) { var nq=nextQ(), qs=S.questionnaire||[], lq=qs.length?qs[qs.length-1].date:null;
+    h += '<div class="card"><h2>'+esc(t("q_card_title"))+'</h2><p class="small muted" style="margin:0 0 10px">'+esc(t("q_card_intro"))+'</p><div class="counts"><span class="chip">'+(S.q_due?'<i class="dot YELLOW"></i>'+esc(t("q_now")):esc(fmt(t("q_next"),{d:nq?fmtDate(nq,false):"–"})))+'</span>'+(lq?'<span class="small muted" style="align-self:center">'+esc(fmt(t("q_last"),{d:fmtDate(lq,false)}))+'</span>':'')+'</div>'
+       + '<button class="btn'+(S.q_due?' primary':'')+'" id="qOpen" style="margin-top:12px">'+esc(S.q_due?t("q_fill"):t("q_view"))+'</button></div>'; }
   if (S.lens_phone) h += '<div class="card"><h2>'+esc(t("contact_title"))+'</h2><div class="row2">'+sendBtn(t("sms_generic"), "", t("text_contact"))+'<a class="btn" href="tel:'+esc(S.lens_phone)+'">'+esc(t("call_lens"))+'</a></div></div>';
   h += '<div class="card"><h2>'+esc(t("install_title"))+'</h2><p class="small" style="margin:0">'+esc(t("install"))+'</p></div>';
   h += '<p class="small muted" style="text-align:center">Check-in · v1.0</p>';
   $("t-info").innerHTML = h;
+  var el; if (el=$("qOpen")) el.addEventListener("click", function(){ openQ(!!S.q_due); });
 }
 
 /* ---- Admin ---- */
