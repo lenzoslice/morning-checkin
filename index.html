@@ -450,14 +450,14 @@ function renderToday(){
   if (el=$("cancelck")) el.addEventListener("click", function(){ form.date=null; form.editing=false; form.l=null; renderToday(); });
   if (el=$("editck")) el.addEventListener("click", function(){ form.editing=true; form.l=null; renderToday(); });
   if (el=$("addnote")) el.addEventListener("click", function(){ form.showNote=true; renderToday(); var ta=$("cknote"); if(ta) ta.focus(); });
-  if (el=$("cknote")) el.addEventListener("input", function(){ form.note=el.value; });
+  if (el=$("cknote")) el.addEventListener("input", function(){ form.note=this.value; });
   $("t-today").querySelectorAll(".picker button[data-k]").forEach(function(b){ b.addEventListener("click", function(){ var k=b.getAttribute("data-k"), v=+b.getAttribute("data-v"); if(k.charAt(0)==="q"&&k.length===2) form.q[+k.charAt(1)]=v; else form[k]=v; renderToday(); }); });
   if (el=$("sw_settled")) el.addEventListener("click", function(){ form.settled=!form.settled; renderToday(); });
   if (el=$("sw_dlp")) el.addEventListener("click", function(){ form.dlp=!form.dlp; renderToday(); });
   if (el=$("submitck")) el.addEventListener("click", submitCheckin);
   if (el=$("isostart")) el.addEventListener("click", function(){ openIso(); });
   if (el=$("evEdit")) el.addEventListener("click", function(){ form.evEditing=true; form.sp=c.session_pain; form.min=c.minutes==null?"":String(c.minutes); renderToday(); });
-  if (el=$("evMin")) el.addEventListener("input", function(){ form.min=el.value; });
+  if (el=$("evMin")) el.addEventListener("input", function(){ form.min=this.value; });
   if (el=$("saveev")) el.addEventListener("click", function(){ saveWith("saveev", {action:"evening", date:d, session_pain:form.sp, minutes:(form.min===""?null:+form.min)}, function(){ form.evEditing=false; form.sp=null; }); });
   if (el=$("pgOpen")) el.addEventListener("click", function(){ form.pgOpen=true; renderToday(); });
   if (el=$("pgEdit")) el.addEventListener("click", function(){ form.pgOpen=true; form.pgl=c.pregame_l; form.pgr=c.pregame_r; renderToday(); });
