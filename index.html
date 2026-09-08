@@ -261,12 +261,12 @@ var ACTIONS = {
   gym:["ci_save_gym",["date","session","exercises","note"]], set_baseline:["ci_set_baseline",["b"]], note:["ci_add_review_note",["text"]],
   event:["ci_upsert_event",["date","etype","time","detail"]], delete_event:["ci_delete_event",["date"]], setting:["ci_set_setting",["key","value"]],
   evening:["ci_save_evening",["date","session_pain","minutes"]], pregame:["ci_save_pregame",["date","l","r"]],
-  iso_test:["ci_save_iso_test",["date","pre_l","pre_r","post_l","post_r","context"]], questionnaire:["ci_save_questionnaire",["date","pg","fn","pl"]],
+  iso_test:["ci_save_iso_test",["date","pre_l","pre_r","post_l","post_r","context"]], questionnaire:["ci_save_questionnaire",["date","pg","fn","pl","answers","instrument"]],
   delete_iso:["ci_delete_iso_test",["id"]]
 };
 var S = null, ME = null, LANG = localStorage.getItem("ci_lang") || "fr", TAB = (location.hash||"").replace("#","") || "today";
 if (["today","trend","gym","info","admin"].indexOf(TAB) < 0) TAB = "today";
-var form = { l: null, r: null, settled: true, dlp: false, editing: false, date: null, note: "", showNote: false, sp: null, min: "", evEditing: false, pgl: null, pgr: null, pgOpen: false, q: [null,null,null] };
+var form = { l: null, r: null, settled: true, dlp: false, editing: false, date: null, note: "", showNote: false, sp: null, min: "", evEditing: false, pgl: null, pgr: null, pgOpen: false, q: {} };
 var FAST = (location.hostname !== "lenzoslice.github.io") && /fast=1/.test(location.search);
 var ISO = null;
 var gymUI = { session: null, ex: {} };
@@ -295,7 +295,7 @@ fr: {
   adm_settings:"Réglages", adm_phone:"Numéro pour le bouton Texter", adm_upcoming:"Prochaines dates", confirm_del:"Supprimer ?",
   /* condition-specific text (test_how, q_settled, q_dlp, calib, act, ex, sess, info, coach_line, text_contact, sms_body…) is merged from the server after sign-in */
   test_how:"", q_settled:"", q_dlp:"", calib:"", text_contact:"", show_coach:"", coach_line:"", flag_week:"", gym_red:"", gym_nocheck:"",
-  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", adm_review:"", sms_body:"{c} {l}/{r}",
+  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", evening_title:"", evening_pain_q:"", evening_minutes_q:"", evening_saved:"{p}/10{m}", evening_nocheck:"", pregame_title:"", pregame_hint:"", pregame_saved:"{t} {l}/{r}", note_add:"", note_ph:"", missed_title:"", missed_btn:"", streak:"{n}", q_title:"", q_intro:"", q_labels:["","",""], q_items:null, q_saved:"", iso_start:"", iso_pre:"", iso_post:"", iso_hold:"HOLD", iso_rest:"REST", iso_round:"{i} / 5", iso_skip:"", iso_stop:"", iso_go:"", iso_save:"", iso_done_good:"", iso_done_flat:"", iso_ctx:{}, prog_up:"", prog_hold:"", prog_yellow:"", prog_title:"", prog_trend:"", week_title:"", week_this:"", week_last:"", week_days:"", week_sessions:"", week_pain:"", week_minutes:"", upcoming_title:"", cluster_warn:"", adm_missed:"", adm_q:"", adm_iso:"", adm_review:"", sms_body:"{c} {l}/{r}",
   sess:{A:"A",B:"B",ISO:"ISO"}, ex:{A:[],B:[],ISO:[]}, act:{GREEN:{},YELLOW:{},RED:{}}
 },
 en: {
@@ -451,7 +451,7 @@ function renderToday(){
   if (el=$("editck")) el.addEventListener("click", function(){ form.editing=true; form.l=null; renderToday(); });
   if (el=$("addnote")) el.addEventListener("click", function(){ form.showNote=true; renderToday(); var ta=$("cknote"); if(ta) ta.focus(); });
   if (el=$("cknote")) el.addEventListener("input", function(){ form.note=this.value; });
-  $("t-today").querySelectorAll(".picker button[data-k]").forEach(function(b){ b.addEventListener("click", function(){ var k=b.getAttribute("data-k"), v=+b.getAttribute("data-v"); if(k.charAt(0)==="q"&&k.length===2) form.q[+k.charAt(1)]=v; else form[k]=v; renderToday(); }); });
+  $("t-today").querySelectorAll(".picker button[data-k]").forEach(function(b){ b.addEventListener("click", function(){ var k=b.getAttribute("data-k"), v=+b.getAttribute("data-v"); if(k.indexOf("q:")===0) form.q[k.slice(2)]=v; else form[k]=v; renderToday(); }); });
   if (el=$("sw_settled")) el.addEventListener("click", function(){ form.settled=!form.settled; renderToday(); });
   if (el=$("sw_dlp")) el.addEventListener("click", function(){ form.dlp=!form.dlp; renderToday(); });
   if (el=$("submitck")) el.addEventListener("click", submitCheckin);
@@ -462,7 +462,7 @@ function renderToday(){
   if (el=$("pgOpen")) el.addEventListener("click", function(){ form.pgOpen=true; renderToday(); });
   if (el=$("pgEdit")) el.addEventListener("click", function(){ form.pgOpen=true; form.pgl=c.pregame_l; form.pgr=c.pregame_r; renderToday(); });
   if (el=$("savepg")) el.addEventListener("click", function(){ saveWith("savepg", {action:"pregame", date:d, l:form.pgl, r:form.pgr}, function(){ form.pgOpen=false; form.pgl=null; form.pgr=null; }); });
-  if (el=$("saveq")) el.addEventListener("click", function(){ saveWith("saveq", {action:"questionnaire", date:today, pg:form.q[0], fn:form.q[1], pl:form.q[2]}, function(){ form.q=[null,null,null]; toast(t("q_saved")); }); });
+  if (el=$("saveq")) el.addEventListener("click", function(){ var sc=qScores(qItems(), form.q); saveWith("saveq", {action:"questionnaire", date:today, pg:sc.pain_general, fn:sc.function, pl:sc.pain_loading, answers:form.q, instrument:((T[LANG].q_items&&T[LANG].q_items.length)?"tendins-p":"proxy3")}, function(){ form.q={}; toast(t("q_saved")); }); });
 }
 function saveWith(btnId, body, after){
   var b=$(btnId); if(b){ b.disabled=true; b.classList.add("loading"); }
@@ -498,11 +498,24 @@ function pregameHTML(c, d){
   }
   return h+'</div>';
 }
+function qItems(){
+  var items = T[LANG].q_items; if (items && items.length) return items;
+  var subs=["pain_general","function","pain_loading"];
+  return t("q_labels").map(function(lab,i){ return {id:"p"+i, sub:subs[i], text:lab, min:0, max:10}; });
+}
+function qScores(items, ans){
+  var sums={pain_general:[0,0],function:[0,0],pain_loading:[0,0]};
+  items.forEach(function(it){ var v=ans[it.id]; if(v==null) return; var max=(it.max!=null?it.max:10), min=(it.min||0), val=it.reverse ? (max - v + min) : v; sums[it.sub][0]+= (val-min); sums[it.sub][1]+= (max-min); });
+  var out={}; Object.keys(sums).forEach(function(k){ out[k]= sums[k][1] ? Math.round(sums[k][0]/sums[k][1]*100) : 0; }); return out;
+}
 function questionnaireHTML(){
-  var h='<div class="card"><h2>'+esc(t("q_title"))+'</h2><p class="small muted" style="margin:0 0 4px">'+esc(t("q_intro"))+'</p>';
-  t("q_labels").forEach(function(lab,i){ h += '<div class="qrow"><div class="t">'+esc(lab)+'</div>'+pickerHTML("q"+i, form.q[i])+'</div>'; });
-  var ok = form.q.every(function(v){ return v!==null; });
+  var items=qItems(), h='<div class="card"><h2>'+esc(t("q_title"))+'</h2><p class="small muted" style="margin:0 0 4px">'+esc(t("q_intro"))+'</p>';
+  items.forEach(function(it){ h += '<div class="qrow"><div class="t">'+esc(it.text)+'</div>'+(it.anchors?'<div class="small muted" style="display:flex;justify-content:space-between;margin-bottom:4px"><span>'+esc(it.anchors[0])+'</span><span>'+esc(it.anchors[1])+'</span></div>':'')+pickerRange("q:"+it.id, form.q[it.id], it.min||0, it.max!=null?it.max:10)+'</div>'; });
+  var ok = items.every(function(it){ return form.q[it.id]!=null; });
   return h+'<button class="btn primary" id="saveq" style="margin-top:14px"'+(ok?"":" disabled")+'>'+esc(t("adm_save"))+'</button></div>';
+}
+function pickerRange(k, v, min, max){
+  var h='<div class="picker">'; for (var i=min;i<=max;i++) h+='<button class="n'+Math.round(i*10/Math.max(1,max))+'" data-k="'+k+'" data-v="'+i+'" aria-pressed="'+(v===i)+'">'+i+'</button>'; return h+'</div>';
 }
 function pickerHTML(k, v){
   var h='<div class="picker">'; for (var i=0;i<=10;i++) h+='<button class="n'+i+'" data-k="'+k+'" data-v="'+i+'" aria-pressed="'+(v===i)+'">'+i+'</button>'; return h+'</div>';
@@ -722,8 +735,8 @@ function renderInfo(){
 
 /* ---- Admin ---- */
 function qChart(qs){
-  if (qs.length<2) return ""; var W=320,H=110,px=24,py=8, n=qs.length, sx=function(i){ return px+i/(n-1)*(W-px-8); }, sy=function(v){ return py+(10-v)/10*(H-py-16); };
-  var svg='<svg class="chart" viewBox="0 0 '+W+' '+H+'">'; [0,5,10].forEach(function(g){ svg+='<line x1="'+px+'" y1="'+sy(g)+'" x2="'+(W-8)+'" y2="'+sy(g)+'" stroke="var(--line)"/><text x="'+(px-5)+'" y="'+(sy(g)+4)+'" font-size="9" text-anchor="end" fill="var(--ink-3)">'+g+'</text>'; });
+  if (qs.length<2) return ""; var W=320,H=110,px=28,py=8, n=qs.length, sx=function(i){ return px+i/(n-1)*(W-px-8); }, sy=function(v){ return py+(100-v)/100*(H-py-16); };
+  var svg='<svg class="chart" viewBox="0 0 '+W+' '+H+'">'; [0,50,100].forEach(function(g){ svg+='<line x1="'+px+'" y1="'+sy(g)+'" x2="'+(W-8)+'" y2="'+sy(g)+'" stroke="var(--line)"/><text x="'+(px-5)+'" y="'+(sy(g)+4)+'" font-size="9" text-anchor="end" fill="var(--ink-3)">'+g+'</text>'; });
   [["pain_general","var(--bad-fill)"],["function","var(--ink-2)"],["pain_loading","var(--warn-fill)"]].forEach(function(s){ svg+='<polyline fill="none" stroke="'+s[1]+'" stroke-width="2" points="'+qs.map(function(q,i){ return sx(i)+","+sy(q[s[0]]); }).join(" ")+'"/>'; });
   return svg+'</svg><p class="legend">'+t("q_labels").map(function(l,i){ return ["🔴","⚫","🟠"][i]+" "+esc(l.slice(0,22)); }).join(" · ").replace(/🔴|⚫|🟠/g,function(m){ return {"🔴":'<i class="dot RED"></i>',"⚫":'<i class="dot" style="background:var(--ink-2)"></i>',"🟠":'<i class="dot YELLOW"></i>'}[m]; })+'</p>';
 }
@@ -749,7 +762,7 @@ function renderAdmin(){
   var ms=S.missed||{};
   h += '<div class="card"><h2>'+esc(t("adm_missed"))+'</h2><div class="counts"><span class="chip">'+(ms.missed14||0)+'</span><span class="small muted">'+esc(LANG==="fr"?"dernier":"last")+': '+esc(ms.last_date||"–")+' · '+esc(fmt(t("streak"),{n:streakCount()}))+'</span></div></div>';
   var qs=(S.questionnaire||[]);
-  h += '<div class="card"><h2>'+esc(t("adm_q"))+'</h2>'+(qs.length?'<table><tr><th>Date</th><th>'+esc(t("q_labels")[0].slice(0,14))+'</th><th>'+esc(t("q_labels")[1].slice(0,14))+'</th><th>'+esc(t("q_labels")[2].slice(0,14))+'</th></tr>'+qs.slice().reverse().slice(0,8).map(function(q){ return '<tr><td>'+esc(q.date.slice(5))+'</td><td>'+q.pain_general+'</td><td>'+q.function+'</td><td>'+q.pain_loading+'</td></tr>'; }).join("")+'</table>'+qChart(qs):'<p class="muted small" style="margin:0">'+esc(t("no_data"))+'</p>')+'</div>';
+  h += '<div class="card"><h2>'+esc(t("adm_q"))+'</h2>'+(qs.length?'<table><tr><th>Date</th><th>'+esc(t("q_labels")[0].slice(0,14))+'</th><th>'+esc(t("q_labels")[1].slice(0,14))+'</th><th>'+esc(t("q_labels")[2].slice(0,14))+'</th></tr>'+qs.slice().reverse().slice(0,8).map(function(q){ return '<tr><td>'+esc(q.date.slice(5))+(q.instrument==="tendins-p"?' <span class="small muted">T</span>':'')+'</td><td>'+q.pain_general+' %</td><td>'+q.function+' %</td><td>'+q.pain_loading+' %</td></tr>'; }).join("")+'</table>'+qChart(qs):'<p class="muted small" style="margin:0">'+esc(t("no_data"))+'</p>')+'</div>';
   var its=(S.iso_tests||[]);
   h += '<div class="card"><h2>'+esc(t("adm_iso"))+'</h2>'+(its.length?'<table><tr><th>Date</th><th></th><th>'+esc(LANG==="fr"?"avant → après":"before → after")+'</th><th>Δ</th><th></th></tr>'+its.slice().reverse().slice(0,10).map(function(i){ var pre=(i.pre_l==null&&i.pre_r==null)?null:Math.max(i.pre_l||0,i.pre_r||0), post=(i.post_l==null&&i.post_r==null)?null:Math.max(i.post_l||0,i.post_r||0), dl=(pre==null||post==null)?"":(pre-post); return '<tr><td>'+esc(i.date.slice(5))+'</td><td class="muted small">'+esc((t("iso_ctx")||{})[i.context]||i.context||"")+'</td><td>'+(pre==null?"–":pre)+' → '+(post==null?"–":post)+'</td><td><b>'+(dl===""?"":(dl>0?"−"+dl:(dl<0?"+"+(-dl):"0")))+'</b></td><td><button class="linkbtn small" data-isodel="'+i.id+'">×</button></td></tr>'; }).join("")+'</table>'+isoMean(its):'<p class="muted small" style="margin:0">'+esc(t("no_data"))+'</p>')+'</div>';
   var ups=(S.events||[]).filter(function(e){ return e.date>=S.today.date; }).slice(0,40);
@@ -774,8 +787,8 @@ function renderAdmin(){
     (S.checkins||[]).forEach(function(c){ rows.push([c.date,c.day_type||"",c.l,c.r,c.worst,c.settled,c.dlp,c.colour,c.session_pain,c.minutes,c.pregame_l,c.pregame_r,c.pregame_at||"",(c.note||"").replace(/"/g,'""')]); });
     rows.push([]); rows.push(["iso_date","iso_at","context","pre_l","pre_r","post_l","post_r"]);
     (S.iso_tests||[]).forEach(function(i){ rows.push([i.date,i.at,i.context,i.pre_l,i.pre_r,i.post_l,i.post_r]); });
-    rows.push([]); rows.push(["q_date","pain_general","function","pain_loading"]);
-    (S.questionnaire||[]).forEach(function(q){ rows.push([q.date,q.pain_general,q.function,q.pain_loading]); });
+    rows.push([]); rows.push(["q_date","instrument","pain_general_pct","function_pct","pain_loading_pct","answers_json"]);
+    (S.questionnaire||[]).forEach(function(q){ rows.push([q.date,q.instrument||"",q.pain_general,q.function,q.pain_loading,JSON.stringify(q.answers||{}).replace(/"/g,'""')]); });
     rows.push([]); rows.push(["gym_date","session","colour_at","exercises_json"]);
     (S.gym||[]).forEach(function(g){ rows.push([g.date,g.session,g.colour_at||"",JSON.stringify(g.exercises).replace(/"/g,'""')]); });
     var csv=rows.map(function(r){ return r.map(function(v){ return '"'+String(v==null?"":v)+'"'; }).join(","); }).join("\n");
