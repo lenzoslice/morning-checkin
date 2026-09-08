@@ -258,7 +258,7 @@ fr: {
   adm_settings:"Réglages", adm_phone:"Numéro pour le bouton Texter", adm_upcoming:"Prochaines dates", confirm_del:"Supprimer ?",
   /* condition-specific text (test_how, q_settled, q_dlp, calib, act, ex, sess, info, coach_line, text_contact, sms_body…) is merged from the server after sign-in */
   test_how:"", q_settled:"", q_dlp:"", calib:"", text_contact:"", show_coach:"", coach_line:"", flag_week:"", gym_red:"", gym_nocheck:"",
-  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], adm_review:"", sms_body:"{c} {l}/{r}",
+  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], adm_review:"", sms_body:"{c} {l}/{r}",
   sess:{A:"A",B:"B",ISO:"ISO"}, ex:{A:[],B:[],ISO:[]}, act:{GREEN:{},YELLOW:{},RED:{}}
 },
 en: {
@@ -282,7 +282,7 @@ en: {
   adm_events:"Schedule", adm_ev_add:"Add / edit a date", adm_ev_time:"Time", adm_ev_detail:"Detail", adm_save:"Save",
   adm_settings:"Settings", adm_phone:"Number for the Text button", adm_upcoming:"Upcoming dates", confirm_del:"Delete?",
   test_how:"", q_settled:"", q_dlp:"", calib:"", text_contact:"", show_coach:"", coach_line:"", flag_week:"", gym_red:"", gym_nocheck:"",
-  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], adm_review:"", sms_body:"{c} {l}/{r}",
+  gym_rule_green:"", gym_rule_yellow:"", info_title:"", info:[], iso_title:"", iso_when:[], adm_review:"", sms_body:"{c} {l}/{r}",
   sess:{A:"A",B:"B",ISO:"ISO"}, ex:{A:[],B:[],ISO:[]}, act:{GREEN:{},YELLOW:{},RED:{}}
 }};
 function t(k){ var o=T[LANG]; k.split(".").forEach(function(p){ o = o==null?null:o[p]; }); return o==null?k:o; }
@@ -501,6 +501,7 @@ function renderGym(){
 /* ---- Info ---- */
 function renderInfo(){
   var h='<div class="card"><h2>'+esc(t("info_title"))+'</h2><ul class="plain">'+t("info").map(function(x){ return '<li>'+esc(x)+'</li>'; }).join("")+'</ul></div>';
+  if (t("iso_title")) h += '<div class="card"><h2>'+esc(t("iso_title"))+'</h2><ul class="plain">'+t("iso_when").map(function(x){ return '<li>'+esc(x)+'</li>'; }).join("")+'</ul></div>';
   h += '<div class="card"><h2>'+esc(t("install_title"))+'</h2><p class="small" style="margin:0">'+esc(t("install"))+'</p></div>';
   h += '<p class="small muted" style="text-align:center">Check-in · v1.0</p>';
   $("t-info").innerHTML = h;
